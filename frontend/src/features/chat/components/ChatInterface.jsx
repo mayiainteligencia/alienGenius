@@ -69,26 +69,27 @@ export default function ChatInterface() {
       <div className="chat-hero">
 
         {/* Video con crossfade */}
-        <div className="bot-orb">
-          <video
-            ref={videoRef}
-            key={currentVideo}
-            src={currentVideo}
-            autoPlay
-            loop
-            muted
-            playsInline
-            className={`bot-video bot-video--fade`}
-          />
-          <div className="bot-glow" />
-        </div>
-
-        {/* Logo AIEn Genius */}
-        <img
-          src={alienGenius}
-          alt="AIEn Genius"
-          className="chat-hero__logo"
+      <div className="bot-orb">
+        <video
+          ref={videoRef}
+          key={currentVideo}
+          src={currentVideo}
+          autoPlay
+          loop
+          muted
+          playsInline
+          webkit-playsinline="true"
+          className={`bot-video bot-video--fade`}
         />
+        <div className="bot-glow" />
+      </div>
+
+      {/* Logo AIEn Genius */}
+      <img
+        src={alienGenius}
+        alt="AIEn Genius"
+        className="chat-hero__logo"
+      />
 
         <p className="chat-hero__subtitle">Tu asesor de confianza en limpieza</p>
       </div>
