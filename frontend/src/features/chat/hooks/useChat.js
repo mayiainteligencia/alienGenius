@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { getBotResponse, createMessage } from "../services/chatService"
+import { useSpeech } from "./useSpeech"
 
 export const CHAT_STATES = {
   IDLE: "idle",
@@ -16,6 +17,10 @@ export const useChat = () => {
   const [input, setInput] = useState("")
   const [typing, setTyping] = useState(false)
   const [chatState, setChatState] = useState(CHAT_STATES.IDLE)
+
+  const { listening, startListening, stopListening, speak, supported } = useSpeech({
+    onResult: (transcript) => sendMessage(transcript),
+  })
 
   const sendMessage = async (text) => {
     if (!text.trim()) return
@@ -34,6 +39,7 @@ export const useChat = () => {
       setChatState(CHAT_STATES.SUCCESS)
       const botMsg = createMessage("bot", reply)
       setMessages(prev => [...prev, botMsg])
+      speak(reply)
 
       setTimeout(() => setChatState(CHAT_STATES.IDLE), 3000)
     } catch (error) {
@@ -61,5 +67,9 @@ export const useChat = () => {
     sendMessage,
     onInputFocus,
     onInputBlur,
+    listening,
+    startListening,
+    stopListening,
+    voiceSupported: supported,
   }
 }

@@ -40,7 +40,7 @@ const VIDEO_MAP = {
 }
 
 export default function ChatInterface() {
-  const { messages, input, setInput, typing, chatState, sendMessage, onInputFocus, onInputBlur } = useChat()
+  const { messages, input, setInput, typing, chatState, sendMessage, onInputFocus, onInputBlur, listening, startListening, stopListening, voiceSupported } = useChat()
   const bottomRef = useRef(null)
   const messagesRef = useRef(null)
   const videoRef = useRef(null)
@@ -135,9 +135,23 @@ export default function ChatInterface() {
               onKeyDown={handleKey}
               onFocus={onInputFocus}
               onBlur={onInputBlur}
-              placeholder="Listo para ayudarte a limpiar..."
+              placeholder={listening ? "Escuchando..." : "Listo para ayudarte a limpiar..."}
               className="chat-input"
             />
+            {voiceSupported && (
+              <button
+                className={`chat-send ${listening ? "chat-send--active chat-send--listening" : ""}`}
+                onClick={listening ? stopListening : startListening}
+                title={listening ? "Detener micrófono" : "Hablar"}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                  <rect x="9" y="2" width="6" height="11" rx="3" stroke="currentColor" strokeWidth="2"/>
+                  <path d="M5 10a7 7 0 0 0 14 0" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                  <line x1="12" y1="17" x2="12" y2="21" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                  <line x1="9" y1="21" x2="15" y2="21" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                </svg>
+              </button>
+            )}
             <button
               className={`chat-send ${input.trim() ? "chat-send--active" : ""}`}
               onClick={() => sendMessage(input)}
