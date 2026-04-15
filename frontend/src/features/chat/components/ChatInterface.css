@@ -3,20 +3,24 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  padding: 100px 20px 40px;
+  padding: 50px 20px 40px;
   position: relative;
   z-index: 1;
 }
 
 /* HERO */
 .chat-hero {
+  position: sticky;
+  top: 40px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 28px;
+  gap: 2px;
+  margin-bottom: 12px;
   animation: fadeSlideDown 0.7s ease both;
+  z-index: 10;
+  background: transparent;
+  pointer-events: none;
 }
 
 @keyframes fadeSlideDown {
@@ -36,7 +40,7 @@
   box-shadow: none;
   border: none;
   animation: float 4s ease-in-out infinite;
-  margin-bottom: 6px;
+  margin-bottom: 0px;
 }
 
 @keyframes float {
@@ -108,7 +112,7 @@
   display: flex;
   flex-direction: column;
   gap: 14px;
-  max-height: 380px;
+  max-height: 240px;
   overflow-y: auto;
 }
 
@@ -302,7 +306,7 @@
 /* RESPONSIVE */
 @media (max-width: 640px) {
   .chat-box { border-radius: var(--radius-md); }
-  .chat-messages { max-height: 300px; }
+  .chat-messages { max-height: 200px; }
   .chat-hero__title { font-size: 24px; }
 }
 

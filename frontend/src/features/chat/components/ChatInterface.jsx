@@ -42,10 +42,13 @@ const VIDEO_MAP = {
 export default function ChatInterface() {
   const { messages, input, setInput, typing, chatState, sendMessage, onInputFocus, onInputBlur } = useChat()
   const bottomRef = useRef(null)
+  const messagesRef = useRef(null)
   const videoRef = useRef(null)
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" })
+    if (messagesRef.current) {
+      messagesRef.current.scrollTop = messagesRef.current.scrollHeight
+    }
   }, [messages, typing])
 
   useEffect(() => {
@@ -95,7 +98,7 @@ export default function ChatInterface() {
       </div>
 
       <div className="chat-box">
-        <div className="chat-messages">
+        <div className="chat-messages" ref={messagesRef}>
           {messages.map(msg => (
             <div key={msg.id} className={`chat-message chat-message--${msg.role}`}>
               {msg.role === "bot" ? <BotAvatar /> : <UserAvatar />}
