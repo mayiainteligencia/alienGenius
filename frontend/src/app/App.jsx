@@ -16,7 +16,7 @@ function App() {
       <ChatInterface />
 
       <footer className="footer">
-        <p>© 2025 AIEn Genius · Innovación responsable con el medio ambiente 🌿</p>
+        <p>© 2026 AIEn Genius · Innovación responsable con el medio ambiente 🌿</p>
       </footer>
     </div>
   )

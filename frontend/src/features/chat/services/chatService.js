@@ -1,4 +1,5 @@
-const API_URL = "http://localhost:3001/api/chat"
+const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3001"
+const API_URL = `${BASE_URL}/api/chat`
 
 export const getBotResponse = async (userMessage) => {
   const response = await fetch(API_URL + "/message", {
