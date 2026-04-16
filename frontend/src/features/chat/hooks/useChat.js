@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useRef } from "react"
 import { getBotResponse, createMessage } from "../services/chatService"
 import { useSpeech } from "./useSpeech"
 
@@ -10,6 +10,11 @@ export const CHAT_STATES = {
   SUCCESS: "success",
 }
 
+export const VOICE_TURNS = {
+  USER: "user",
+  BOT: "bot",
+}
+
 export const useChat = () => {
   const [messages, setMessages] = useState([
     createMessage("bot", "¡Hola! Soy **AIEn Genius**, tu asesor de confianza en limpieza. ¿En qué puedo ayudarte hoy? 🌿"),
@@ -17,9 +22,15 @@ export const useChat = () => {
   const [input, setInput] = useState("")
   const [typing, setTyping] = useState(false)
   const [chatState, setChatState] = useState(CHAT_STATES.IDLE)
+  const [voiceMode, setVoiceMode] = useState(false)
+  const [voiceTurn, setVoiceTurn] = useState(VOICE_TURNS.USER)
 
-  const { listening, startListening, stopListening, speak, supported } = useSpeech({
-    onResult: (transcript) => sendMessage(transcript),
+  // Refs para evitar closures obsoletos
+  const sendMessageRef = useRef(null)
+  const voiceModeRef = useRef(false)
+
+  const { listening, startListening, stopListening, speak, cancelSpeak, supported } = useSpeech({
+    onResult: (transcript) => sendMessageRef.current?.(transcript),
   })
 
   const sendMessage = async (text) => {
@@ -30,6 +41,7 @@ export const useChat = () => {
     setInput("")
     setTyping(true)
     setChatState(CHAT_STATES.THINKING)
+    if (voiceModeRef.current) setVoiceTurn(VOICE_TURNS.BOT)
 
     setTimeout(() => setChatState(CHAT_STATES.WORKING), 800)
 
@@ -37,17 +49,46 @@ export const useChat = () => {
       const reply = await getBotResponse(text.trim())
       setTyping(false)
       setChatState(CHAT_STATES.SUCCESS)
-      const botMsg = createMessage("bot", reply)
-      setMessages(prev => [...prev, botMsg])
-      speak(reply)
+      setMessages(prev => [...prev, createMessage("bot", reply)])
 
-      setTimeout(() => setChatState(CHAT_STATES.IDLE), 3000)
+      speak(reply, () => {
+        if (voiceModeRef.current) {
+          setVoiceTurn(VOICE_TURNS.USER)
+          setChatState(CHAT_STATES.IDLE)
+          setTimeout(() => startListening(), 400)
+        }
+      })
+
+      if (!voiceModeRef.current) {
+        setTimeout(() => setChatState(CHAT_STATES.IDLE), 3000)
+      }
     } catch (error) {
       setTyping(false)
       setChatState(CHAT_STATES.IDLE)
-      const errMsg = createMessage("bot", `Lo siento, hubo un problema: ${error.message} 😔`)
-      setMessages(prev => [...prev, errMsg])
+      setMessages(prev => [...prev, createMessage("bot", `Lo siento, hubo un problema: ${error.message} 😔`)])
+      if (voiceModeRef.current) {
+        setVoiceTurn(VOICE_TURNS.USER)
+        setTimeout(() => startListening(), 400)
+      }
     }
+  }
+
+  sendMessageRef.current = sendMessage
+
+  const enterVoiceMode = () => {
+    voiceModeRef.current = true
+    setVoiceMode(true)
+    setVoiceTurn(VOICE_TURNS.USER)
+    setChatState(CHAT_STATES.IDLE)
+    setTimeout(() => startListening(), 600)
+  }
+
+  const exitVoiceMode = () => {
+    voiceModeRef.current = false
+    setVoiceMode(false)
+    stopListening()
+    cancelSpeak()
+    setChatState(CHAT_STATES.IDLE)
   }
 
   const onInputFocus = () => {
@@ -70,6 +111,10 @@ export const useChat = () => {
     listening,
     startListening,
     stopListening,
+    voiceMode,
+    voiceTurn,
+    enterVoiceMode,
+    exitVoiceMode,
     voiceSupported: supported,
   }
 }

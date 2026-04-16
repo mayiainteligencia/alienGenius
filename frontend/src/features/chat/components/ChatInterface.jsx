@@ -1,5 +1,5 @@
 import { useRef, useEffect } from "react"
-import { useChat, CHAT_STATES } from "../hooks/useChat"
+import { useChat, CHAT_STATES, VOICE_TURNS } from "../hooks/useChat"
 import { QUICK_QUESTIONS } from "../../../constants/quickQuestions"
 import alienGenius from "../../../assets/alienGenius.png"
 import caraSaludo from "../../../assets/caraSaludo.mp4"
@@ -40,10 +40,17 @@ const VIDEO_MAP = {
 }
 
 export default function ChatInterface() {
-  const { messages, input, setInput, typing, chatState, sendMessage, onInputFocus, onInputBlur, listening, startListening, stopListening, voiceSupported } = useChat()
-  const bottomRef = useRef(null)
+  const {
+    messages, input, setInput, typing, chatState,
+    sendMessage, onInputFocus, onInputBlur,
+    listening,
+    voiceMode, voiceTurn, enterVoiceMode, exitVoiceMode,
+    voiceSupported,
+  } = useChat()
+
   const messagesRef = useRef(null)
   const videoRef = useRef(null)
+  const voiceVideoRef = useRef(null)
 
   useEffect(() => {
     if (messagesRef.current) {
@@ -52,10 +59,10 @@ export default function ChatInterface() {
   }, [messages, typing])
 
   useEffect(() => {
-    if (videoRef.current) {
-      videoRef.current.load()
-      videoRef.current.play().catch(() => {})
-    }
+    videoRef.current?.load()
+    videoRef.current?.play().catch(() => {})
+    voiceVideoRef.current?.load()
+    voiceVideoRef.current?.play().catch(() => {})
   }, [chatState])
 
   const handleKey = (e) => {
@@ -66,37 +73,73 @@ export default function ChatInterface() {
   }
 
   const currentVideo = VIDEO_MAP[chatState]
+  const isUserTurn = voiceTurn === VOICE_TURNS.USER
 
   return (
     <div className="chat-wrapper">
+
+      {/* MODO VOZ */}
+      {voiceMode && (
+        <div className="voice-overlay">
+          <video
+            ref={voiceVideoRef}
+            key={currentVideo}
+            src={currentVideo}
+            autoPlay
+            loop
+            muted
+            playsInline
+            className="voice-overlay__video"
+          />
+
+          <div className={`voice-overlay__indicator ${isUserTurn ? "voice-overlay__indicator--user" : "voice-overlay__indicator--bot"}`}>
+            {isUserTurn ? (
+              <>
+                <span className="voice-overlay__dot" />
+                <span className="voice-overlay__dot" />
+                <span className="voice-overlay__dot" />
+                <span className="voice-overlay__label">Habla ahora...</span>
+              </>
+            ) : (
+              <>
+                <span className="voice-overlay__wave" />
+                <span className="voice-overlay__wave" />
+                <span className="voice-overlay__wave" />
+                <span className="voice-overlay__label">Respondiendo...</span>
+              </>
+            )}
+          </div>
+
+          <button className="voice-overlay__exit" onClick={exitVoiceMode}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+              <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/>
+            </svg>
+            Salir del modo voz
+          </button>
+        </div>
+      )}
+
+      {/* HERO */}
       <div className="chat-hero">
-
-        {/* Video con crossfade */}
-      <div className="bot-orb">
-        <video
-          ref={videoRef}
-          key={currentVideo}
-          src={currentVideo}
-          autoPlay
-          loop
-          muted
-          playsInline
-          webkit-playsinline="true"
-          className={`bot-video bot-video--fade`}
-        />
-        <div className="bot-glow" />
-      </div>
-
-      {/* Logo AIEn Genius */}
-      <img
-        src={alienGenius}
-        alt="AIEn Genius"
-        className="chat-hero__logo"
-      />
-
+        <div className="bot-orb">
+          <video
+            ref={videoRef}
+            key={currentVideo}
+            src={currentVideo}
+            autoPlay
+            loop
+            muted
+            playsInline
+            webkit-playsinline="true"
+            className="bot-video bot-video--fade"
+          />
+          <div className="bot-glow" />
+        </div>
+        <img src={alienGenius} alt="AIEn Genius" className="chat-hero__logo" />
         <p className="chat-hero__subtitle">Tu asesor de confianza en limpieza</p>
       </div>
 
+      {/* CHAT BOX */}
       <div className="chat-box">
         <div className="chat-messages" ref={messagesRef}>
           {messages.map(msg => (
@@ -116,7 +159,6 @@ export default function ChatInterface() {
               </div>
             </div>
           )}
-          <div ref={bottomRef} />
         </div>
 
         <div className="chat-quick">
@@ -140,9 +182,9 @@ export default function ChatInterface() {
             />
             {voiceSupported && (
               <button
-                className={`chat-send ${listening ? "chat-send--active chat-send--listening" : ""}`}
-                onClick={listening ? stopListening : startListening}
-                title={listening ? "Detener micrófono" : "Hablar"}
+                className="chat-send chat-voice-mode-btn"
+                onClick={enterVoiceMode}
+                title="Modo conversación por voz"
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
                   <rect x="9" y="2" width="6" height="11" rx="3" stroke="currentColor" strokeWidth="2"/>

@@ -15,12 +15,10 @@ export const useSpeech = ({ onResult }) => {
     recognition.maxAlternatives = 1
 
     recognition.onstart = () => setListening(true)
-
     recognition.onresult = (e) => {
       const transcript = e.results[0][0].transcript
       onResult(transcript)
     }
-
     recognition.onend = () => setListening(false)
     recognition.onerror = () => setListening(false)
 
@@ -33,24 +31,40 @@ export const useSpeech = ({ onResult }) => {
     setListening(false)
   }, [])
 
-  const speak = useCallback((text) => {
-    if (!window.speechSynthesis) return
+  const speak = useCallback((text, onEnd) => {
+    if (!window.speechSynthesis) {
+      onEnd?.()
+      return
+    }
     window.speechSynthesis.cancel()
 
-    const utterance = new SpeechSynthesisUtterance(text)
+    const clean = text.replace(/[\u{1F000}-\u{1FFFF}\u{2600}-\u{27BF}\u{FE00}-\u{FEFF}]/gu, "").trim()
+    const utterance = new SpeechSynthesisUtterance(clean)
     utterance.lang = "es-MX"
-    utterance.rate = 1
-    utterance.pitch = 1.1
+    utterance.rate = 1.25
+    utterance.pitch = 1.05
 
-    // Buscar voz en español si hay disponible
-    const voices = window.speechSynthesis.getVoices()
-    const spanishVoice = voices.find(v => v.lang.startsWith("es"))
-    if (spanishVoice) utterance.voice = spanishVoice
+    const trySpeak = () => {
+      const voices = window.speechSynthesis.getVoices()
+      const spanishVoice = voices.find(v => v.lang.startsWith("es"))
+      if (spanishVoice) utterance.voice = spanishVoice
+      utterance.onend = () => onEnd?.()
+      window.speechSynthesis.speak(utterance)
+    }
 
-    window.speechSynthesis.speak(utterance)
+    // Las voces pueden no estar cargadas aún
+    if (window.speechSynthesis.getVoices().length === 0) {
+      window.speechSynthesis.addEventListener("voiceschanged", trySpeak, { once: true })
+    } else {
+      trySpeak()
+    }
+  }, [])
+
+  const cancelSpeak = useCallback(() => {
+    window.speechSynthesis?.cancel()
   }, [])
 
   const supported = !!SpeechRecognition
 
-  return { listening, startListening, stopListening, speak, supported }
+  return { listening, startListening, stopListening, speak, cancelSpeak, supported }
 }
